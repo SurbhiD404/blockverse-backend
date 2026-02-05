@@ -1,0 +1,2 @@
+SOLO_FEE = 100
+DUO_FEE = 180
