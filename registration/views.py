@@ -23,9 +23,10 @@ class CreatePaymentOrder(APIView):
 
         
         if team_type == "solo":
-            amount = SOLO_FEE
+            amount = SOLO_FEE * 100
+
         elif team_type == "duo":
-            amount = DUO_FEE
+            amount = DUO_FEE * 100
         else:
             return Response(
                 {"error": "Invalid team type"},
