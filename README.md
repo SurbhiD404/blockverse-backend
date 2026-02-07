@@ -1,7 +1,7 @@
 # BLOCKVERSE’26 – Event Registration Backend
  This project is the backend system for the college technical event
  BLOCKVERSE’26. It handles event registrations, team management,
- email confirmations, and QR-based registration access.
+ email confirmations,Razorpay payment verification and QR-based registration access.
 
  ##Features
   - Solo and Duo team registration
