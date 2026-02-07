@@ -30,5 +30,3 @@ python manage.py migrate
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-echo "Creating admin user..."
-echo "from django.contrib.auth import get_user_model; User=get_user_model(); u='admin'; p='admin123'; e='surbhidharvan@gmail.com'; User.objects.filter(username=u).exists() or User.objects.create_superuser(u,e,p)" | python manage.py shell
