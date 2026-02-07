@@ -10,7 +10,8 @@
   - Confirmation email sent to all registered     candidates
   - QR code for direct registration access
   - Admin panel for organizers
-
+  - Razorpay payment verification
+  - PostgreSQL production database
 
  ##Tech Stack
  - Python 3
@@ -39,11 +40,18 @@
     python manage.py runserver
 
 
-  API Endpoints
+ ## API Endpoints
 
- Register Team
- POST /api/register/
+ 1. Create Payment Order
+    POST /api/create-payment-order/
 
- QR Code
- GET /api/qr/
+   Generates Razorpay order based on team type(solo/duo).
+
+ 2. Verify Payment & Register
+    POST /api/verify-payment-and-register/
+   
+   Verifies payment signature and stores registration data.
+
+ 3. QR Code
+    GET /api/qr/
 
