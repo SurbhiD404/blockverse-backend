@@ -45,8 +45,9 @@ class CreatePaymentOrder(APIView):
             })
 
         except Exception as e:
+            logger.error(f"Payment order creation failed: {str(e)}")
             return Response(
-                {"error": f"Payment order failed: {str(e)}"},
+                {"error": f"Payment order creation failed"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -58,7 +59,17 @@ class VerifyPaymentAndRegister(APIView):
         data = request.data
         p2 = None  
 
-    
+        if not all([
+            data.get("razorpay_order_id"),
+            data.get("razorpay_payment_id"),
+            data.get("razorpay_signature")
+        ]):
+            return Response(
+                {"error": "Missing payment fields"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+            
         try:
             verified = verify_signature({
                 "razorpay_order_id": data.get("razorpay_order_id"),
@@ -76,7 +87,7 @@ class VerifyPaymentAndRegister(APIView):
         except Exception as e: 
             logger.error(f"Verification error: {str(e)}")
             return Response(
-                {"error": f"Verification error: {str(e)}"},
+                {"error": f"Payment verification error"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -93,8 +104,8 @@ class VerifyPaymentAndRegister(APIView):
                     team_id=reg['teamId'],
                     team_type=reg['team_type'],
                     password=reg['password'],
-                    payment_order_id=data["razorpay_order_id"],
-                    payment_id=data["razorpay_payment_id"],
+                    payment_order_id=data.get("razorpay_order_id"),
+                    payment_id=data.get("razorpay_payment_id"),
                     payment_status=True
                 )
                 logger.info(f"Team registered: {team.team_id}")
@@ -113,7 +124,7 @@ class VerifyPaymentAndRegister(APIView):
         except Exception as e:
             logger.error(f"Registration failed: {str(e)}")
             return Response(
-                {"error": f"Registration failed: {str(e)}"},
+                {"error": f"Registration failed"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -129,7 +140,7 @@ class VerifyPaymentAndRegister(APIView):
         except Exception as e:
             email_status = "failed"
             logger.error(f"Email sending failed for team {team.team_id}: {str(e)}")
-            print("Email failed:", e)
+            # print("Email failed:", e)
 
        
         return Response(
