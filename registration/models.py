@@ -1,5 +1,11 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password , identify_hasher
+from django.core.validators import RegexValidator
+
+phone_validator = RegexValidator(
+    regex=r'^\d{10}$',
+    message="Phone number must be 10 digits."
+)
 
 class Team(models.Model):
     TEAM_TYPE_CHOICES = (
@@ -20,7 +26,7 @@ class Team(models.Model):
     def save(self, *args, **kwargs):
         try:
             identify_hasher(self.password)
-        except :
+        except Exception:
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
@@ -33,16 +39,29 @@ class Player(models.Model):
         ('MALE', 'Male'),
         ('FEMALE', 'Female'),
     )
+    
+    BRANCH_CHOICES = [
+        ("CSE", "CSE"),
+        ("ECE", "ECE"),
+        ("IT", "IT"),
+        ("EEE", "EEE"),
+        ("ME", "ME"),
+        ("CE", "CE"),
+        ("CSIT", "CSIT"),
+        ("AIML", "AIML"),
+        ("OTHERS", "OTHERS"),
+    ]
+
 
     team = models.ForeignKey(Team, related_name="players", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=10, validators=[phone_validator])
     student_no = models.CharField(max_length=20)
     roll_no = models.CharField(max_length=20, unique=True)
     email = models.EmailField()
     year = models.CharField(max_length=1, choices=[('1', '1st'), ('2', '2nd')])
     gender = models.CharField(max_length=6, choices=GENDER_CHOICES)
-    branch = models.CharField(max_length=10)
+    branch = models.CharField(max_length=10, choices=BRANCH_CHOICES)
 
     def __str__(self):
         return self.name
