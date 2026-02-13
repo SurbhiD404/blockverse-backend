@@ -9,17 +9,13 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
+import os
 import dj_database_url
 from pathlib import Path  
 from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -29,9 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
+# DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+# IS_PRODUCTION = not DEBUG
 
-ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ["*"] 
+ALLOWED_HOSTS=["127.0.0.1","localhost","blockverse-backend-i8ib.onrender.com"]
 
 
 SECURE_BROWSER_XSS_FILTER = True
@@ -141,14 +140,29 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-DEFAULT_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
 EVENT_NAME = os.getenv("EVENT_NAME", "BLOCKVERSE’26")
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://127.0.0.1:8000")
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+SECURE_SSL_REDIRECT =False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = os.getenv("EMAIL_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASS")
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -163,15 +177,9 @@ LOGGING = {
             "class": "logging.StreamHandler",
         },
     },
-
     "root": {
-        "handlers": ["console", "file"],
+        "handlers": ["file", "console"],
         "level": "INFO",
     },
-}
-CORS_ALLOW_ALL_ORIGINS = True
-
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+ }
 

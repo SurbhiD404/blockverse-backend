@@ -1,7 +1,10 @@
 import uuid
 import logging
+import razorpay
+
 from django.conf import settings
 from django.db import transaction, IntegrityError
+from django.contrib.auth.hashers import make_password 
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,9 +12,12 @@ from rest_framework import status
 
 from .models import Team, Player
 from .serializers import TeamRegistrationSerializer
-from .utils import send_registration_email
+
 from .payment import create_order, verify_signature
 from .constants import SOLO_FEE, DUO_FEE
+
+from .email_service import send_registration_email
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +41,7 @@ class CreatePaymentOrder(APIView):
 
         try:
             receipt = str(uuid.uuid4())
-            order = create_order(amount, receipt)
+            order = create_order(amount, receipt,notes={"team_type": team_type})
 
             return Response({
                 "order_id": order["id"],
@@ -44,8 +50,8 @@ class CreatePaymentOrder(APIView):
                 "key": settings.RAZORPAY_KEY_ID
             })
 
-        except Exception as e:
-            logger.error(f"Payment order creation failed: {str(e)}")
+        except Exception :
+            logger.exception("Payment order creation failed")
             return Response(
                 {"error": f"Payment order creation failed"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -84,10 +90,10 @@ class VerifyPaymentAndRegister(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             logger.info("Payment verified successfully")
-        except Exception as e: 
-            logger.error(f"Verification error: {str(e)}")
+        except Exception: 
+            logger.exception("Payment verification error")
             return Response(
-                {"error": f"Payment verification error"},
+                {"error": "Payment verification error"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -95,15 +101,55 @@ class VerifyPaymentAndRegister(APIView):
         serializer = TeamRegistrationSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         reg = serializer.validated_data
-
-       
+        raw_password = reg['password']  
+        hashed_password = make_password(raw_password)
         try:
+            client = razorpay.Client(
+                auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+            )
+
+            payment = client.payment.fetch(data.get("razorpay_payment_id"))
+            paid_amount = payment["amount"]  # paise
+            
+            order=client.order.fetch(data.get("razorpay_order_id"))
+            order_team_type=order.get("notes", {}).get("team_type")
+            
+            if order_team_type not in ["solo", "duo"]:
+                logger.warning("Invalid order metadata")
+                return Response(
+                    {"error": "Invalid payment metadata"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+
+            expected_amount = (
+                SOLO_FEE * 100
+                if order_team_type == "solo"
+                else DUO_FEE * 100
+            )
+
+            if paid_amount != expected_amount:
+                logger.warning("Payment amount mismatch")
+                return Response(
+                    {"error": "Payment amount mismatch"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Exception :
+            logger.exception("Payment fetch failed")
+            return Response(
+                {"error": "Unable to verify payment amount"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+       
+        try:  
             with transaction.atomic():
 
                 team = Team.objects.create(
                     team_id=reg['teamId'],
                     team_type=reg['team_type'],
-                    password=reg['password'],
+                    # password=reg['password'],
+                    password=hashed_password,
                     payment_order_id=data.get("razorpay_order_id"),
                     payment_id=data.get("razorpay_payment_id"),
                     payment_status=True
@@ -121,8 +167,8 @@ class VerifyPaymentAndRegister(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        except Exception as e:
-            logger.error(f"Registration failed: {str(e)}")
+        except Exception :
+            logger.exception(f"Registration failed")
             return Response(
                 {"error": f"Registration failed"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -132,14 +178,19 @@ class VerifyPaymentAndRegister(APIView):
         email_status = "sent"
 
         try:
-            send_registration_email(p1.email, team.team_id, reg['password'])
+            # send_registration_email(p1.email, team.team_id, reg['password'])
+            send_registration_email(team, raw_password)
+            # if p2:
+            #     send_registration_email(p2, raw_password)
+            team.email_sent = True 
+            team.save(update_fields=["email_sent"])
+    
 
-            if p2:
-                send_registration_email(p2.email, team.team_id, reg['password'])
-
-        except Exception as e:
+        except Exception :
             email_status = "failed"
-            logger.error(f"Email sending failed for team {team.team_id}: {str(e)}")
+            team.email_sent = False
+            team.save(update_fields=["email_sent"])
+            logger.exception(f"Email sending failed for team {team.team_id}")
             # print("Email failed:", e)
 
        

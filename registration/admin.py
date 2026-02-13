@@ -17,11 +17,12 @@ class TeamAdmin(admin.ModelAdmin):
         "team_type",
         "payment_status",
         "created_at",
+        "email_sent",
     )
 
     search_fields = ("team_id",)
 
-    list_filter = ("team_type", "payment_status")
+    list_filter = ("team_type", "payment_status", "email_sent")
 
     ordering = ("-created_at",)
 

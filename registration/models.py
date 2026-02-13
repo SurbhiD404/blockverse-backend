@@ -3,8 +3,9 @@ from django.contrib.auth.hashers import make_password , identify_hasher
 from django.core.validators import RegexValidator
 
 phone_validator = RegexValidator(
-    regex=r'^\d{10}$',
-    message="Phone number must be 10 digits."
+    # regex=r'^\d{10}$',
+    regex=r'^[6-9]\d{9}$',
+    message="Phone number must be a valid 10-digit Indian mobile number."
 )
 
 class Team(models.Model):
@@ -13,13 +14,15 @@ class Team(models.Model):
         ('duo', 'Duo'),
     )
 
-    team_id = models.CharField(max_length=20, unique=True)
-    team_type = models.CharField(max_length=4, choices=TEAM_TYPE_CHOICES)
+    team_id = models.CharField(max_length=50, unique=True)
+    team_type = models.CharField(max_length=10, choices=TEAM_TYPE_CHOICES)
     password = models.CharField(max_length=128)
     
     payment_order_id = models.CharField(max_length=100, blank=True, null=True)
     payment_id = models.CharField(max_length=100, blank=True, null=True)
     payment_status = models.BooleanField(default=False)
+    
+    email_sent = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -56,7 +59,7 @@ class Player(models.Model):
     team = models.ForeignKey(Team, related_name="players", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=10, validators=[phone_validator])
-    student_no = models.CharField(max_length=20)
+    student_no = models.CharField(max_length=20, unique=True)
     roll_no = models.CharField(max_length=20, unique=True)
     email = models.EmailField()
     year = models.CharField(max_length=1, choices=[('1', '1st'), ('2', '2nd')])
