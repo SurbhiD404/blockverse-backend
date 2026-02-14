@@ -50,10 +50,10 @@ class CreatePaymentOrder(APIView):
                 "key": settings.RAZORPAY_KEY_ID
             })
 
-        except Exception :
+        except Exception as e :
             logger.exception("Payment order creation failed")
             return Response(
-                {"error": f"Payment order creation failed"},
+                {"error": f"Payment order creation failed: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -90,10 +90,10 @@ class VerifyPaymentAndRegister(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             logger.info("Payment verified successfully")
-        except Exception: 
-            logger.exception("Payment verification error")
+        except Exception as e: 
+            logger.exception("Payment verification error: %s", e)
             return Response(
-                {"error": "Payment verification error"},
+                {"error": f"Payment verification error: {e}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -135,10 +135,10 @@ class VerifyPaymentAndRegister(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        except Exception :
-            logger.exception("Payment fetch failed")
+        except Exception as e:
+            logger.exception("Payment fetch failed: %s", e)
             return Response(
-                {"error": "Unable to verify payment amount"},
+                {"error": f"Unable to verify payment amount: {e}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
        
@@ -167,10 +167,10 @@ class VerifyPaymentAndRegister(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        except Exception :
-            logger.exception(f"Registration failed")
+        except Exception as e:
+            logger.exception(f"Registration failed: {e}")
             return Response(
-                {"error": f"Registration failed"},
+                {"error": f"Registration failed due to server error: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -186,11 +186,11 @@ class VerifyPaymentAndRegister(APIView):
             team.save(update_fields=["email_sent"])
     
 
-        except Exception :
+        except Exception as e:
             email_status = "failed"
             team.email_sent = False
             team.save(update_fields=["email_sent"])
-            logger.exception(f"Email sending failed for team {team.team_id}")
+            logger.exception(f"Email sending failed for team {team.team_id}: {e}")
             # print("Email failed:", e)
 
        
