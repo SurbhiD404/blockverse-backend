@@ -16,7 +16,8 @@ from .serializers import TeamRegistrationSerializer
 from .payment import create_order, verify_signature
 from .constants import SOLO_FEE, DUO_FEE
 
-from .email_service import send_registration_email
+# from .email_service import send_registration_email
+from .tasks import send_email_task
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class VerifyPaymentAndRegister(APIView):
         serializer.is_valid(raise_exception=True)
         reg = serializer.validated_data
         raw_password = reg['password']  
-        hashed_password = make_password(raw_password)
+        hashed_password = raw_password
         try:
             client = razorpay.Client(
                 auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
@@ -149,7 +150,7 @@ class VerifyPaymentAndRegister(APIView):
                     team_id=reg['teamId'],
                     team_type=reg['team_type'],
                     # password=reg['password'],
-                    password=hashed_password,
+                    password=raw_password,
                     payment_order_id=data.get("razorpay_order_id"),
                     payment_id=data.get("razorpay_payment_id"),
                     payment_status=True
@@ -175,16 +176,23 @@ class VerifyPaymentAndRegister(APIView):
             )
 
         
-        email_status = "sent"
+        # email_status = "sent"
 
-        try:
-            send_registration_email(team, raw_password)
-            team.email_sent = True
-            team.save(update_fields=["email_sent"])
+        # try:
+        #     send_registration_email(team, raw_password)
+        #     team.email_sent = True
+        #     team.save(update_fields=["email_sent"])
 
-        except Exception as e:
-              email_status = "failed"
-              logger.error("Email failed but registration succeeded: %s", e)
+        # except Exception as e:
+        #       email_status = "failed"
+        #       team.email_sent = False
+        #       team.save(update_fields=["email_sent"])
+        #       logger.error("Email failed but registration succeeded: %s", e)
+        team.email_sent = False
+        team.save(update_fields=["email_sent"])
+
+        send_email_task.delay(team.id, raw_password)
+        email_status = "queued"
 
        
         return Response(
