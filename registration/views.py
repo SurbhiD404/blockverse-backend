@@ -15,9 +15,7 @@ from .serializers import TeamRegistrationSerializer
 
 from .payment import create_order, verify_signature
 from .constants import SOLO_FEE, DUO_FEE
-
-# from .email_service import send_registration_email
-from .tasks import send_email_task
+from .email_service import send_registration_email
 
 logger = logging.getLogger(__name__)
 
@@ -176,25 +174,19 @@ class VerifyPaymentAndRegister(APIView):
             )
 
         
-        # email_status = "sent"
+        email_status = "sent"
 
-        # try:
-        #     send_registration_email(team, raw_password)
-        #     team.email_sent = True
-        #     team.save(update_fields=["email_sent"])
+        try:
+            send_registration_email(team, raw_password)
+            team.email_sent = True
+            team.save(update_fields=["email_sent"])
 
-        # except Exception as e:
-        #       email_status = "failed"
-        #       team.email_sent = False
-        #       team.save(update_fields=["email_sent"])
-        #       logger.error("Email failed but registration succeeded: %s", e)
-        team.email_sent = False
-        team.save(update_fields=["email_sent"])
-
-        send_email_task.delay(team.id, raw_password)
-        email_status = "queued"
-
-       
+        except Exception as e:
+              email_status = "failed"
+              team.email_sent = False
+              team.save(update_fields=["email_sent"])
+              logger.error("Email failed but registration succeeded: %s", e)
+        
         return Response(
             {
                 "message": "Payment verified & registration successful",
