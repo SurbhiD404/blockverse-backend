@@ -5,13 +5,15 @@ client = razorpay.Client(
     auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
 )
 
-def create_order(amount, receipt):
-    return client.order.create({
-        "amount": amount * 100,
+def create_order(amount, receipt , notes=None ):
+    order_data = {
+        "amount": amount,
         "currency": "INR",
         "receipt": receipt,
-        "payment_capture": 1
-    })
+        "payment_capture": 1,
+        "notes": notes or {}
+    }
+    return client.order.create(data=order_data)
 
 def verify_signature(data):
     try:
