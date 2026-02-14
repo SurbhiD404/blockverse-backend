@@ -178,20 +178,13 @@ class VerifyPaymentAndRegister(APIView):
         email_status = "sent"
 
         try:
-            # send_registration_email(p1.email, team.team_id, reg['password'])
             send_registration_email(team, raw_password)
-            # if p2:
-            #     send_registration_email(p2, raw_password)
-            team.email_sent = True 
+            team.email_sent = True
             team.save(update_fields=["email_sent"])
-    
 
         except Exception as e:
-            email_status = "failed"
-            team.email_sent = False
-            team.save(update_fields=["email_sent"])
-            logger.exception(f"Email sending failed for team {team.team_id}: {e}")
-            # print("Email failed:", e)
+              email_status = "failed"
+              logger.error("Email failed but registration succeeded: %s", e)
 
        
         return Response(
