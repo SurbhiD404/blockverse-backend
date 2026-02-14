@@ -22,7 +22,7 @@ class TeamAdmin(admin.ModelAdmin):
 
     search_fields = ("team_id",)
 
-    list_filter = ("team_type", "payment_status", "email_sent")
+    list_filter = ("team_type", "payment_status","email_sent" )
 
     ordering = ("-created_at",)
 
