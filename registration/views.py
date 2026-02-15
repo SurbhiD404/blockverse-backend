@@ -101,7 +101,7 @@ class VerifyPaymentAndRegister(APIView):
         serializer.is_valid(raise_exception=True)
         reg = serializer.validated_data
         raw_password = reg['password']  
-        hashed_password = raw_password
+        # hashed_password = raw_password
         try:
             client = razorpay.Client(
                 auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)

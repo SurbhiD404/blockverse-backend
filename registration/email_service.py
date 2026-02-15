@@ -118,13 +118,14 @@
 #         return False
 
 
+import logging
 import qrcode
 from io import BytesIO
 
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from email.mime.image import MIMEImage
-
+logger = logging.getLogger(__name__)
 
 def generate_qr_image(data):
     qr = qrcode.make(data)
@@ -267,10 +268,10 @@ Bring your A-game.
         for img in qr_images:
             email.attach(img)
 
-        email.send()
+        email.send(fail_silently=True)
 
         return True
 
     except Exception as e:
-        print("EMAIL ERROR:", e)
+        logger.error("EMAIL ERROR: %s", e)
         return False
