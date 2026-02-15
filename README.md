@@ -66,10 +66,6 @@ QRCode + Pillow
 
 Render deployment
 
-## Project Setup (Local Development)
-1. Clone repository
-git clone https://github.com/YOUR_USERNAME/blockverse-backend.git
-cd blockverse-backend
 
 2. Create virtual environment
 python -m venv venv
