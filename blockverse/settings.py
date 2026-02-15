@@ -22,12 +22,13 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 # DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 # IS_PRODUCTION = not DEBUG
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # ALLOWED_HOSTS = ["*"] 
 ALLOWED_HOSTS=["127.0.0.1","localhost","blockverse-backend-i8ib.onrender.com"]
@@ -93,9 +94,25 @@ WSGI_APPLICATION = 'blockverse.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.environ.get("DATABASE_URL")
+#     )
+# }
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "blockverse",
+#         "USER": "postgres",
+#         "PASSWORD": "collegeadmin",
+#         "HOST": "localhost",
+#         "PORT": "5432",
+#     }
+# }
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL")
+    "default": dj_database_url.config(
+        default="postgresql://postgres:collegeadmin@localhost:5432/blockverse",
+        conn_max_age=600,
     )
 }
 
@@ -148,17 +165,17 @@ RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-SECURE_SSL_REDIRECT =False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+SECURE_SSL_REDIRECT =not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS") == "True"
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 
 EMAIL_HOST_USER = os.getenv("EMAIL_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASS")
