@@ -270,7 +270,7 @@ Bring your A-game.
         for img in qr_images:
             email.attach(img)
 
-        email.send(fail_silently=True)
+        email.send(fail_silently=False)
 
         return True
 
