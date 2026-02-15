@@ -163,6 +163,7 @@ Bring your A-game.
         cid = f"qr{index}"
 
         image = MIMEImage(img_buffer.read())
+        img_buffer.close()
         image.add_header("Content-ID", f"<{cid}>")
         image.add_header("Content-Disposition", "inline")
 
@@ -252,7 +253,8 @@ Bring your A-game.
 </div>
 """
 
-    recipients = [player.email for player in players]
+    # recipients = [player.email for player in players]
+    recipients = [p.email for p in players if p.email]
 
     try:
         email = EmailMultiAlternatives(
