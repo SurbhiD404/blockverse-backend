@@ -1,7 +1,7 @@
 import uuid
 import logging
 import razorpay
-
+import threading
 from django.conf import settings
 from django.db import transaction, IntegrityError
 from django.contrib.auth.hashers import make_password 
@@ -174,19 +174,46 @@ class VerifyPaymentAndRegister(APIView):
             )
 
         
-        email_status = "sent"
+        # email_status = "sent"
 
-        try:
-            send_registration_email(team, raw_password)
-            team.email_sent = True
-            team.save(update_fields=["email_sent"])
+        # try:
+        #     send_registration_email(team, raw_password)
+        #     team.email_sent = True
+        #     team.save(update_fields=["email_sent"])
 
-        except Exception as e:
-              email_status = "failed"
-              team.email_sent = False
-              team.save(update_fields=["email_sent"])
-              logger.error("Email failed but registration succeeded: %s", e)
+        # except Exception as e:
+        #       email_status = "failed"
+        #       team.email_sent = False
+        #       team.save(update_fields=["email_sent"])
+        #       logger.error("Email failed but registration succeeded: %s", e)
         
+        def send_email_async(team_pk, password):
+            from .models import Team
+            try:
+                team = Team.objects.get(id=team_pk)
+                send_registration_email(team, password)
+                team.email_sent = True
+                team.save(update_fields=["email_sent"])
+            except Exception as e:
+                try:
+                    team = Team.objects.get(pk=team_pk)
+                    team.email_sent = False
+                    team.save(update_fields=["email_sent"])
+                except Exception as e:
+                    logger.exception("Failed to update email status: %s", e)
+                        
+                
+                logger.error("Email failed but registration succeeded: %s", e)
+
+
+        threading.Thread(
+            target=send_email_async,
+            args=(team.id, raw_password),
+            daemon=True
+        ).start()
+
+        email_status = "processing"
+
         return Response(
             {
                 "message": "Payment verified & registration successful",
